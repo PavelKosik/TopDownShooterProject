@@ -1,0 +1,192 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "MyAIController.h"
+
+
+void AMyAIController::BeginPlay() {
+	Super::BeginPlay();
+
+	PrimaryActorTick.bCanEverTick = true;
+	myPawn = GetPawn();
+	navMesh = UNavigationSystemV1::GetCurrent(this);
+
+	AMyAIController::FollowPath();
+	// AMyAIController::HandleHearing();
+	player = Cast<AMyPlayer>(GetWorld()->GetFirstPlayerController()->GetPawn());
+	player->aiController = this;
+
+
+}
+
+void AMyAIController::Tick(float DeltaTime) {
+	Super::Tick(DeltaTime);
+
+
+
+	if (player) {
+
+
+		if (player->madeSoundShoot || player->madeSoundStep) {
+			AMyAIController::HandleHearing();
+
+		}
+	}
+
+	currentTimeBetweenShots += DeltaTime;
+
+	if (FVector::DistXY(myEnemyLogic->GetActorLocation(), myEnemyLogic->lastPlayerSawPos) < distanceToStartShootingAt && myEnemyLogic->playerFoundThisFrame) {
+
+		PauseMove(GetCurrentMoveRequestID());
+		AMyAIController::LookAtPlayer();
+		AMyAIController::ShootPlayer();
+	}
+
+
+	if (myEnemyLogic->foundPlayer && myEnemyLogic->playerFoundThisFrame == false) {
+		AMyAIController::WalkToLastSeenPosition();
+		lookingForPlayer = true;
+		shooting = false;
+	}
+
+	if (myEnemyLogic->foundPlayer == false) {
+		numberOfShotProjectiles = 0;
+		shooting = false;
+
+	}
+
+	if (lookingForPlayer) {
+		if (IsFollowingAPath() == false) {
+			StopMovement();
+			goingToLastSawPosition = false;
+			//myEnemyLogic->foundPlayer = false;
+			//shooting = false;
+			AMyAIController::RotateAroundSearch(DeltaTime);
+		}
+
+
+	}
+	
+	/*	if (GetMoveStatus() == EPathFollowingStatus::Idle && goingToLastSawPosition) {
+			UE_LOG(LogTemp, Warning, TEXT("EPATH FOLOWING STATUS"));
+		}*/
+
+
+		/*if (currentWaitTime > 0.0f) {
+			currentWaitTime -= 0.03f;
+		}
+
+		else {
+
+
+			if (waiting) {
+
+				waiting = false;
+				AMyAIController::FollowPath();
+
+
+			}
+		}
+		*/
+		/*if (waiting) {
+			StopMovement();
+		}*/
+
+}
+
+void AMyAIController::OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result) {
+	Super::OnMoveCompleted(RequestID, Result);
+
+	if (lookingForPlayer == false) {
+
+		//UE_LOG(LogTemp, Warning, TEXT("done"));
+		if (myEnemyLogic && goingToLastSawPosition == false) {
+			if (myEnemyLogic->foundPlayer == false) {
+
+				if (finishedPath == false) {
+
+					if (currentPathIndex + 1 < myEnemyLogic->waypointPositons.Num()) {
+						currentPathIndex += 1;
+						AMyAIController::FollowPath();
+						return;
+					}
+
+					else {
+
+						finishedPath = true;
+						currentPathIndex -= 1;
+						GetWorld()->GetTimerManager().SetTimer(timerHandle, this, &AMyAIController::Wait, maxWaitTime, false);
+						//AMyAIController::FollowPath();
+						return;
+					}
+				}
+
+				if (finishedPath) {
+					if (currentPathIndex - 1 >= 0) {
+						currentPathIndex -= 1;
+						AMyAIController::FollowPath();
+						return;
+					}
+
+					else {
+
+						finishedPath = false;
+						currentPathIndex += 1;
+						GetWorld()->GetTimerManager().SetTimer(timerHandle, this, &AMyAIController::Wait, maxWaitTime, false);
+						//AMyAIController::FollowPath();
+						return;
+
+					}
+				}
+				//AMyAIController::FollowPath();
+
+			}
+			else {
+				currentPathIndex = 0;
+			}
+
+
+
+		}
+
+		/*	if (goingToLastSawPosition) {
+				AMyAIController::RotateAroundSearch();
+			}*/
+	}
+	/*else {
+		AMyAIController::OnMoveCompleted(RequestID, Result);
+	}*/
+
+}
+
+
+
+void AMyAIController::MoveToRandomPoint() {
+	//  myPawn = GetPawn();
+	 // UE_LOG(LogTemp, Warning, TEXT("%s"), myEnemyLogic->foundPlayer? "true" : "false");
+	if (myPawn) {
+		navMesh = UNavigationSystemV1::GetCurrent(this);
+
+		if (navMesh) {
+
+			FNavLocation outLocation;
+
+			float searchRadius = 350.0f;
+
+			FNavLocation randomPt;
+
+			const bool bFound = navMesh->GetRandomPointInNavigableRadius(myPawn->GetNavAgentLocation(), searchRadius, randomPt);
+
+			if (bFound)
+			{
+				MoveToLocation(randomPt);
+			}
+
+			else {
+				AMyAIController::MoveToRandomPoint();
+			}
+
+		}
+
+		else {
+			navMesh = UNavigationSystemV1::GetCurrent(this);
