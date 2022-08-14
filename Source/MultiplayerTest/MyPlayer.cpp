@@ -14,8 +14,12 @@ AMyPlayer::AMyPlayer()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	playerSkeletalMesh = GetMesh();
 
-	playerMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Player static mesh"));
+	//RootComponent = playerSkeletalMesh;
+	//playerMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Player static mesh"));
+
+	//playerSkeletalMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Player skeletal mesh"));
 
 	cameraComponent = CreateDefaultSubobject<UCameraComponent>("Camera");
 
@@ -23,33 +27,34 @@ AMyPlayer::AMyPlayer()
 
 	projectileSpawn = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Projectile spawn"));
 
-
 	cursorStaticMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Cursor static mesh"));
-
 
 	cameraAttach = CreateDefaultSubobject<USpringArmComponent>(TEXT("Spring Arm"));
 
 
-	projectileSpawn->SetupAttachment(playerMesh);
 
-
-	cameraAttach->SetupAttachment(playerMesh);
+	cameraAttach->SetupAttachment(playerSkeletalMesh);
 	cameraComponent->AttachToComponent(cameraAttach, FAttachmentTransformRules::KeepRelativeTransform);
 	cameraAttach->bUsePawnControlRotation = true;
 	cameraAttach->bEnableCameraLag = false;
 
-	RootComponent = playerMesh;
-
+	//RootComponent = playerMesh;
 
 }
+
 
 // Called when the game starts or when spawned
 void AMyPlayer::BeginPlay()
 {
 	Super::BeginPlay();
 
+	projectileSpawn->AttachToComponent(playerSkeletalMesh, FAttachmentTransformRules::KeepRelativeTransform);
 
-	playerMesh->SetSimulatePhysics(true);
+	//playerMesh->SetSimulatePhysics(true);
+	/*if (playerSkeletalMesh != nullptr && playerSkeletalMeshAsset != nullptr) {
+		playerSkeletalMesh->SetSkeletalMesh(playerSkeletalMeshAsset);
+		playerSkeletalMesh->SetSimulatePhysics(true);
+	}*/
 	AMyPlayer::SetupPlayerController();
 
 	// used to make the mouse cursor centered on the start of the game
@@ -63,7 +68,8 @@ void AMyPlayer::BeginPlay()
 	myPlayerController->SetMouseLocation(lastMouseCorrectPos.X, lastMouseCorrectPos.Y);
 
 	viewportSize = FVector2D(GEngine->GameViewport->Viewport->GetSizeXY());
-	cameraFollowPosition = cameraAttach->GetComponentLocation();
+	//cameraFollowPosition = cameraAttach->GetComponentLocation();
+	cameraFollowPosition = GetActorLocation();
 
 	myHUD = Cast<AMyHUD>(UGameplayStatics::GetPlayerController(this, 0)->GetHUD());
 
@@ -77,18 +83,32 @@ void AMyPlayer::BeginPlay()
 	if (gameInstance->mySaveGame != nullptr) {
 		SetActorLocation(gameInstance->mySaveGame->playerPos);
 	}
+
+	//projectileSpawn->SetWorldLocation(playerSkeletalMesh->GetRightVector() + FVector(100, 0, 0));
 }
 
 // Called every frame
 void AMyPlayer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (GetCharacterMovement()->MovementMode == EMovementMode::MOVE_Falling) {
+		GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+	}
+
+
+	if (playerSkeletalMesh == nullptr) {
+		playerSkeletalMesh = GetMesh();
+		//playerSkeletalMesh->SetSkeletalMesh(playerSkeletalMeshAsset);
+	}
+
 	if (hasBeenHit) {
 		SetActorTickEnabled(false);
 		APlayerController* myPlayer = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 		if (myPlayer) {
 			currentDashTime = 0.0f;
-			playerMesh->SetAllPhysicsLinearVelocity(FVector(0, 0, 0));
+			playerSkeletalMesh->SetAllPhysicsLinearVelocity(FVector(0, 0, 0));
+			//playerMesh->SetAllPhysicsLinearVelocity(FVector(0, 0, 0));
 			DisableInput(myPlayer);
 		}
 	}
@@ -207,7 +227,7 @@ void AMyPlayer::Tick(float DeltaTime)
 			cameraFollowPosition.Y -= cameraSpeed * (mouseY / viewportSize.Y - 0.5f);
 		}
 
-		if (FVector::Dist(GetActorLocation(), cameraFollowPosition) > maxCameraDistance) {
+		if (FVector::Dist(playerSkeletalMesh->GetComponentLocation(), cameraFollowPosition) > maxCameraDistance) {
 			cameraFollowPosition = lastCameraCorrectPos;
 		}
 
@@ -238,32 +258,40 @@ void AMyPlayer::Tick(float DeltaTime)
 	}
 
 	else {
+
+		//cameraFollowPosition = playerSkeletalMesh->GetComponentLocation();
+		//cameraAttach->SetWorldLocation(playerSkeletalMesh->GetComponentLocation());
 		cameraFollowPosition = GetActorLocation();
 		cameraAttach->SetWorldLocation(GetActorLocation());
 	}
 
 	if (currentDashTime > 0.0f) {
-		playerMesh->SetAllPhysicsLinearVelocity(FVector(dashDirection.X * dashSpeed, dashDirection.Y * dashSpeed, dashDirection.Z * dashSpeed));
+		LaunchCharacter(FVector(dashDirection.X * dashSpeed, dashDirection.Y * dashSpeed, dashDirection.Z * dashSpeed),true,true);
+		//playerSkeletalMesh->SetAllPhysicsLinearVelocity(FVector(dashDirection.X * dashSpeed, dashDirection.Y * dashSpeed, dashDirection.Z * dashSpeed));
+		//playerMesh->SetAllPhysicsLinearVelocity(FVector(dashDirection.X * dashSpeed, dashDirection.Y * dashSpeed, dashDirection.Z * dashSpeed));
+		//currentDashTime = 0;
 		currentDashTime -= DeltaTime;
 	}
-
+	
 	if (currentDelayBetweenDashes > 0.0f) {
 		currentDelayBetweenDashes -= DeltaTime;
 	}
 
 
 	if (currentParryTime > 0.0f) {
-		parryShield->SetWorldLocation(projectileSpawn->GetComponentLocation() + FVector(0, 0, 0));
-		parryShield->SetWorldRotation(FRotator(playerMesh->GetComponentRotation().Pitch, playerMesh->GetComponentRotation().Yaw, 0));
-
+		parryShield->SetWorldLocation(projectileSpawn->GetComponentLocation() - FVector(0, 0, 0));
+		//parryShield->SetWorldRotation(FRotator(playerMesh->GetComponentRotation().Pitch, playerMesh->GetComponentRotation().Yaw, 0));
+		parryShield->SetWorldRotation(FRotator(playerSkeletalMesh->GetComponentRotation().Pitch, playerSkeletalMesh->GetComponentRotation().Yaw, 0));
 		parryShield->SetVisibility(true);
 		currentParryTime -= DeltaTime;
 	}
 
 	else {
 
-		parryShield->SetWorldLocation(projectileSpawn->GetComponentLocation() + FVector(0, 0, 0));
-		parryShield->SetWorldRotation(FRotator(playerMesh->GetComponentRotation().Pitch, playerMesh->GetComponentRotation().Yaw, 0));
+		parryShield->SetWorldLocation(projectileSpawn->GetComponentLocation() - FVector(0, 0, 0));
+		//parryShield->SetWorldRotation(FRotator(playerMesh->GetComponentRotation().Pitch, playerMesh->GetComponentRotation().Yaw, 0));
+	
+		parryShield->SetWorldRotation(FRotator(playerSkeletalMesh->GetComponentRotation().Pitch, playerSkeletalMesh->GetComponentRotation().Yaw, 0));
 
 		parryShield->SetVisibility(false);
 	}
@@ -276,7 +304,14 @@ void AMyPlayer::Tick(float DeltaTime)
 	//cursorStaticMesh->SetWorldLocation(FVector(0, 0, 70) + projectileSpawn->GetComponentLocation());
 
 	// set proper rotation of player ground cursor
-	cursorStaticMesh->SetWorldRotation(FRotator(playerMesh->GetComponentRotation().Pitch, playerMesh->GetComponentRotation().Yaw, 0));
+	//cursorStaticMesh->SetWorldRotation(FRotator(playerMesh->GetComponentRotation().Pitch, playerMesh->GetComponentRotation().Yaw, 0));
+
+	if (playerSkeletalMesh) {
+		cursorStaticMesh->SetWorldRotation(FRotator(playerSkeletalMesh->GetComponentRotation().Pitch, playerSkeletalMesh->GetComponentRotation().Yaw, 0));
+		/*projectileSpawn->SetWorldLocation(playerSkeletalMesh->GetComponentRotation() + FVector(100, 0, 0));
+		projectileSpawn->SetWorldRotation(FRotator(playerSkeletalMesh->GetComponentRotation().Pitch, playerSkeletalMesh->GetComponentRotation().Yaw, playerSkeletalMesh->GetComponentRotation().Roll));
+	*/
+	}
 }
 
 void AMyPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -365,8 +400,13 @@ void AMyPlayer::MoveHorizontal(float horizontal)
 			//playerMesh->SetAllPhysicsLinearVelocity(FVector(0, playerMesh->GetPhysicsLinearVelocity().Y, 0), false);
 		}
 
-		playerMesh->SetAllPhysicsLinearVelocity(FVector(currentPlayerMovementSpeedX, playerMesh->GetPhysicsLinearVelocity().Y, 0), false);
-
+		//playerMesh->SetAllPhysicsLinearVelocity(FVector(currentPlayerMovementSpeedX, playerMesh->GetPhysicsLinearVelocity().Y, 0), false);
+		if (playerSkeletalMesh) {
+			AddMovementInput(FVector(currentPlayerMovementSpeedX, 0, 0), 1);
+			//playerSkeletalMesh->SetWorldLocation(playerSkeletalMesh->GetComponentLocation() + FVector(currentPlayerMovementSpeedX,0,0));
+			//playerSkeletalMesh->SetPhysicsLinearVelocity(FVector(currentPlayerMovementSpeedX, playerSkeletalMesh->GetPhysicsLinearVelocity().Y, 0), false);
+			//playerSkeletalMesh->SetAllPhysicsPosition(playerSkeletalMesh->GetComponentLocation() + FVector(currentPlayerMovementSpeedX, 0, 0));
+		}
 	}
 	moveDirectionX = -horizontal;
 }
@@ -440,7 +480,14 @@ void AMyPlayer::MoveVertical(float vertical)
 			//playerMesh->SetAllPhysicsLinearVelocity(FVector(playerMesh->GetPhysicsLinearVelocity().X, 0, 0), false);
 		}
 
-		playerMesh->SetAllPhysicsLinearVelocity(FVector(playerMesh->GetPhysicsLinearVelocity().X, currentPlayerMovementSpeedY, 0), false);
+		//playerMesh->SetAllPhysicsLinearVelocity(FVector(playerMesh->GetPhysicsLinearVelocity().X, currentPlayerMovementSpeedY, 0), false);
+		if (playerSkeletalMesh) {
+			//playerSkeletalMesh->SetWorldLocation(playerSkeletalMesh->GetComponentLocation() + FVector(0, currentPlayerMovementSpeedY, 0));
+			//playerSkeletalMesh->SetAllPhysicsPosition(playerSkeletalMesh->GetComponentLocation() + FVector(0, currentPlayerMovementSpeedY, 0));
+			AddMovementInput(FVector(0, currentPlayerMovementSpeedY, 0), 1);
+
+			//playerSkeletalMesh->SetAllPhysicsLinearVelocity(FVector(playerSkeletalMesh->GetPhysicsLinearVelocity().X, currentPlayerMovementSpeedY, 0), false);
+		}
 	}
 
 	moveDirectionY = vertical;
@@ -458,7 +505,8 @@ void AMyPlayer::LeftClickFunction()
 		{
 
 
-			if (FVector::Dist2D(hit.ImpactPoint, playerMesh->GetComponentLocation()) < 40) {
+			//if (FVector::Dist2D(hit.ImpactPoint, playerMesh->GetComponentLocation()) < 40) {
+			if (FVector::Dist2D(hit.ImpactPoint, playerSkeletalMesh->GetComponentLocation()) < 40) {
 				return;
 			}
 
@@ -480,22 +528,23 @@ void AMyPlayer::LeftClickFunction()
 				FCollisionQueryParams collisionParameters;
 
 				//get projectile spawn position so we can spawn the projectile there
-				FVector spawnPos = projectileSpawn->GetComponentLocation();
+				FVector spawnPos = FVector(projectileSpawn->GetComponentLocation().X, projectileSpawn->GetComponentLocation().Y, GetActorLocation().Z);
 				//FVector positionToGo = FVector(hit.Location.X - projectileSpawn->GetComponentLocation().X, hit.Location.Y - projectileSpawn->GetComponentLocation().Y, 0);
 				FVector positionToGo;
 
-				if (FVector::Dist2D(hit.ImpactPoint, playerMesh->GetComponentLocation()) < 70) {
+				//if (FVector::Dist2D(hit.ImpactPoint, playerMesh->GetComponentLocation()) < 70) {
+				//if (FVector::Dist2D(hit.ImpactPoint, playerSkeletalMesh->GetComponentLocation()) < 70) {
 
 					positionToGo = (cursorStaticMesh->GetRightVector()) * 1000;
 					positionToGo = FVector(positionToGo.X, positionToGo.Y, projectileSpawn->GetComponentLocation().Z); //10
 					//positionToGo = projectileSpawn->GetRightVector();
-				}
+				//}
 
-				else {
+				/*else {
 					positionToGo = (cursorStaticMesh->GetRightVector()) * 1000;
 					positionToGo = FVector(positionToGo.X, positionToGo.Y, projectileSpawn->GetComponentLocation().Z);
 					//positionToGo = FVector(hit.Location.X - projectileSpawn->GetComponentLocation().X, hit.Location.Y - projectileSpawn->GetComponentLocation().Y, 0);
-				}
+				}*/
 
 
 				AMyProjectile* spawned = GetWorld()->SpawnActor<AMyProjectile>(projectileSpawnObject, spawnPos, rotator, parameters);
@@ -573,38 +622,51 @@ void AMyPlayer::RotatePlayerToMousePosition() {
 
 	//FVector direction = mousePosition - playerMesh->GetComponentLocation();
 	//FVector direction = (GetActorLocation())- (GetActorLocation() - (mousePosition-cameraAttach->GetComponentLocation()));
-	FVector direction = mousePosition - (cameraAttach->GetComponentLocation() - playerMesh->GetComponentLocation());
+	//FVector direction = mousePosition - (cameraAttach->GetComponentLocation() - playerMesh->GetComponentLocation());
+	if (playerSkeletalMesh) {
+		//FVector direction = mousePosition - GetActorLocation();
+		FVector direction = mousePosition - (cameraAttach->GetComponentLocation() - playerSkeletalMesh->GetComponentLocation());
+
+		//FRotator newRotation = UKismetMathLibrary::FindLookAtRotation(playerMesh->GetComponentLocation(), direction);
+		FRotator newRotation = UKismetMathLibrary::FindLookAtRotation(playerSkeletalMesh->GetComponentLocation(), direction);
 
 
-	FRotator newRotation = UKismetMathLibrary::FindLookAtRotation(playerMesh->GetComponentLocation(), direction);
+		//UE_LOG(LogTemp, Warning, TEXT("DirectionX: %f, DirectionY: %f, DirectionZ: %f"), direction.X, direction.Y, direction.Z);
+		
+		
+		//direction.Normalize();
 
-
-
-	//UE_LOG(LogTemp, Warning, TEXT("DirectionX: %f, DirectionY: %f, DirectionZ: %f"), direction.X, direction.Y, direction.Z);
-	direction.Normalize();
-	
-	//decreasing the Y rotation by 90 so the player looks straight at the mouse pos
-	newRotation = newRotation - FRotator(0, 90, 0);
-	//FRotator newRotation = (direction).Rotation();
-	newRotation = FRotator(0, newRotation.Yaw, 0);
-	playerMesh->SetWorldRotation(newRotation);
+		//decreasing the Y rotation by 90 so the player looks straight at the mouse pos
+		newRotation = newRotation - FRotator(0, 90, 0);
+		//FRotator newRotation = (direction).Rotation();
+		newRotation = FRotator(0, newRotation.Yaw, 0);
+		//playerMesh->SetWorldRotation(newRotation);
+		playerSkeletalMesh->SetWorldRotation(newRotation);		
+	}
 }
 
 
 
 void AMyPlayer::KeepPlayerInAir() {
-	FVector oldPosition = playerMesh->GetRelativeLocation();
+	if (playerSkeletalMesh) {
 
-	FVector newPosition = FVector(oldPosition.X, oldPosition.Y, 25.0f);
+		//FVector oldPosition = playerMesh->GetRelativeLocation();
 
-	playerMesh->SetRelativeLocation(newPosition);
+		FVector oldPosition = playerSkeletalMesh->GetRelativeLocation();
+
+		FVector newPosition = FVector(oldPosition.X, oldPosition.Y, 25.0f);
+
+		//playerMesh->SetRelativeLocation(newPosition);
+		playerSkeletalMesh->SetRelativeLocation(newPosition);
+	}
 }
 
 
 
 void AMyPlayer::UpdateCursorMesh() {
+	float distance = FVector::Dist(FVector(playerSkeletalMesh->GetComponentLocation().X, playerSkeletalMesh->GetComponentLocation().Y, 0), FVector(cameraComponent->GetComponentLocation().X, cameraComponent->GetComponentLocation().Y, 0));
 
-	float distance = FVector::Dist(FVector(GetActorLocation().X, GetActorLocation().Y, 0), FVector(cameraComponent->GetComponentLocation().X, cameraComponent->GetComponentLocation().Y, 0));
+	//float distance = FVector::Dist(FVector(GetActorLocation().X, GetActorLocation().Y, 0), FVector(cameraComponent->GetComponentLocation().X, cameraComponent->GetComponentLocation().Y, 0));
 
 	if (distance / 100 * cursorLength > 0.5f) {
 		cursorStaticMesh->SetRelativeScale3D(FVector(1, distance / 100 * cursorLength, 1));
@@ -626,6 +688,8 @@ void AMyPlayer::SetCameraFreeViewTrue() {
 
 void AMyPlayer::SetCameraFreeViewFalse() {
 	shouldFreeView = false;
+	/*cameraFollowPosition = playerSkeletalMesh->GetComponentLocation();
+	cameraAttach->SetWorldLocation(playerSkeletalMesh->GetComponentLocation());*/
 	cameraFollowPosition = GetActorLocation();
 	cameraAttach->SetWorldLocation(GetActorLocation());
 }

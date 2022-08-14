@@ -81,7 +81,7 @@ void AMyProjectile::Tick(float DeltaTime)
 	//UE_LOG(LogTemp, Warning, TEXT("%f"), FVector::Distance(playerObject->playerMesh->GetComponentLocation(), projectileMesh->GetComponentLocation()));
 
 	//if projectile is too far away, destroy it
-	if (FVector::Distance(playerObject->playerMesh->GetComponentLocation(), projectileMesh->GetComponentLocation())> allowerdDistanceBetweenPlayerAndProjectile) {
+	if (FVector::Distance(playerObject->playerSkeletalMesh->GetComponentLocation(), projectileMesh->GetComponentLocation())> allowerdDistanceBetweenPlayerAndProjectile) {
 		playerObject->currentProjectile = NULL;
 		Destroy();
 	}

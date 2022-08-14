@@ -186,7 +186,6 @@ void AMyEnemyCharacter::Tick(float DeltaTime)
 			bool gotHit = GetWorld()->LineTraceSingleByChannel(hit, lineStartLocation, lineEndLocation, ECollisionChannel::ECC_WorldDynamic, collisionParams);
 
 			if (gotHit) {
-				//UE_LOG(LogTemp, Warning, TEXT("%s"), *hit.GetActor()->GetFName().ToString());
 
 				lineEndLocation = hit.ImpactPoint;
 
@@ -197,12 +196,16 @@ void AMyEnemyCharacter::Tick(float DeltaTime)
 					myCont->lookingForPlayer = false;
 					lastPlayerSawPos = hit.Location;
 					player = Cast<AMyPlayer>(hit.GetActor());
+					UE_LOG(LogTemp, Warning, TEXT("%s Z ON HIT: %f"), *hit.GetActor()->GetFName().ToString(), hit.GetActor()->GetActorLocation().Z);
+
 				}
 
 				if (hit.GetActor()->ActorHasTag("PlayerProjectile")) {
 					myCont->sawBullet = true;
 					UE_LOG(LogTemp, Warning, TEXT("SAW BULLET HIT"));
 					myCont->lastBulletPos = hit.Location;
+					UE_LOG(LogTemp, Warning, TEXT("%s Z ON HIT: %f"), *hit.GetActor()->GetFName().ToString(), hit.GetActor()->GetActorLocation().Z);
+
 				}
 			}
 			/*if (playerFoundThisFrame ==false) {

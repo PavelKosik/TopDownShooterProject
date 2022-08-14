@@ -3,12 +3,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Pawn.h"
+#include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
 #include "DrawDebugHelpers.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "GameFramework/PlayerController.h"
+#include "Engine/SkeletalMesh.h"
+#include "GameFramework/CharacterMovementComponent.h"
 //#include "MyProjectile.h"
 #include "Blueprint/UserWidget.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
@@ -28,7 +31,7 @@ class MyGameInstance;
 class MySaveGame;
 
 UCLASS()
-class MULTIPLAYERTEST_API AMyPlayer : public APawn
+class MULTIPLAYERTEST_API AMyPlayer : public ACharacter
 {
 	GENERATED_BODY()
 
@@ -45,9 +48,11 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	
+	
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		UStaticMeshComponent* playerMesh;
+	/*UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		UStaticMeshComponent* playerMesh;*/
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		UCameraComponent* cameraComponent;
@@ -97,6 +102,13 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		TSubclassOf< class UUserWidget> cursorWidgetTemplete;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		USkeletalMeshComponent* playerSkeletalMesh;
+	/*
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		USkeletalMesh* playerSkeletalMeshAsset;
+*/
 
 	class AMyAIController* aiController;
 
