@@ -196,7 +196,6 @@ void AMyEnemyCharacter::Tick(float DeltaTime)
 					myCont->lookingForPlayer = false;
 					lastPlayerSawPos = hit.Location;
 					player = Cast<AMyPlayer>(hit.GetActor());
-					UE_LOG(LogTemp, Warning, TEXT("%s Z ON HIT: %f"), *hit.GetActor()->GetFName().ToString(), hit.GetActor()->GetActorLocation().Z);
 
 				}
 
@@ -204,8 +203,6 @@ void AMyEnemyCharacter::Tick(float DeltaTime)
 					myCont->sawBullet = true;
 					UE_LOG(LogTemp, Warning, TEXT("SAW BULLET HIT"));
 					myCont->lastBulletPos = hit.Location;
-					UE_LOG(LogTemp, Warning, TEXT("%s Z ON HIT: %f"), *hit.GetActor()->GetFName().ToString(), hit.GetActor()->GetActorLocation().Z);
-
 				}
 			}
 			/*if (playerFoundThisFrame ==false) {
