@@ -20,6 +20,7 @@
 //#include "MyDashStaminaBar.h"
 //#include "MyGameInstance.h"
 #include "Camera/CameraComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "MyPlayer.generated.h"
 
