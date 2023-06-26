@@ -32,7 +32,6 @@ void AMyCheckpoint::BeginPlay()
 			for (int i = 0; i < myGameInstance->mySaveGame->activatedCheckpointNames.Num(); i++) {
 
 				if (myGameInstance->mySaveGame->activatedCheckpointNames[i] == (GetFName()).ToString()) {
-					UE_LOG(LogTemp, Warning, TEXT("Nalezen CHECKPOINT"));
 					activated = true;
 					return;
 				}
@@ -61,9 +60,7 @@ void AMyCheckpoint::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* 
 	bool enemySearching = false;
 	enemyActors.Empty();
 	enemyAI.Empty();
-	//TArray<AActor*> enemyActors;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AMyAIController::StaticClass(), enemyActors);
-	//TArray<class AMyAIController*> enemyAI;
 	for (int i = 0; i < enemyActors.Num(); i++) {
 		enemyAI.Add(Cast<AMyAIController>(enemyActors[i]));
 		if (enemyAI[i]->goingToLastSawPosition || enemyAI[i]->lookingForPlayer || enemyAI[i]->sawBullet || enemyAI[i]->myEnemyLogic->foundPlayer) {
@@ -99,21 +96,16 @@ void AMyCheckpoint::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* 
 						AMyCheckpoint* thisCheckpoint = Cast<AMyCheckpoint>(checkpointsActors[i]);
 						if (thisCheckpoint->activated) {
 							activatedCheckpointNames.Add(checkpointsActors[i]->GetName());
-							//UE_LOG(LogTemp, Warning, TEXT("JMENO CHECKPOINT: %s"), *checkpointsActors[i]->GetName());
 						}
 					}
 
 
 					UGameplayStatics::GetAllActorsWithTag(GetWorld(), "Enemy", enemyActors);
-					//UGameplayStatics::GetAllActorsOfClass(GetWorld(), AMyAIController::StaticClass(), enemyAIActor);
 					for (int i = 0; i < enemyActors.Num(); i++) {
 
 						enemyAI.Add(Cast<AMyAIController>(enemyActors[i]->GetInstigatorController()));
 
 					}
-
-					//TArray< class AMyAIController*> aliveEnemyAI;
-					//TArray <AActor*> aliveEnemyActors;
 
 					for (int i = 0; i < enemyAI.Num(); i++) {
 						if (enemyAI[i]) {
@@ -122,8 +114,6 @@ void AMyCheckpoint::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* 
 							}
 
 							else {
-								//	aliveEnemyAI.Add(enemyAI[i]);
-									//aliveEnemyActors.Add(enemyActors[i]);
 								aliveEnemiesNames.Add(*enemyActors[i]->GetName());
 							}
 						}
@@ -134,70 +124,28 @@ void AMyCheckpoint::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* 
 
 
 					if (myGameInstance->mySaveGame != nullptr) {
-						//	if (myGameInstance->mySaveGame->activatedCheckpoints.Find(this) == INDEX_NONE) {
-						//class AMyHUD* myHUD = Cast<AMyPlayer>(GetWorld()->GetFirstPlayerController()->GetPawn())->myHUD;
+
 						if (myHUD) {
-
-							UE_LOG(LogTemp, Warning, TEXT("MY CHECKPOINT HUD WORKS"));
 							myGameInstance->mySaveGame->score = myHUD->scoreManagerWidget->score;
-
 						}
+
 						myGameInstance->mySaveGame->playerPos = OtherActor->GetActorLocation();
-						//myGameInstance->mySaveGame->aliveEnemies = aliveEnemyAI;
-						//myGameInstance->mySaveGame->enemyActors = enemyActors;
-						//myGameInstance->mySaveGame->activatedCheckpoints.Add(this);
-						//myGameInstance->mySaveGame->aliveEnemyActors = aliveEnemyActors;
-						//myGameInstance->mySaveGame->enemyAI = enemyAI;
 						myGameInstance->mySaveGame->aliveEnemiesNames = aliveEnemiesNames;
 						myGameInstance->mySaveGame->activatedCheckpointNames = activatedCheckpointNames;
-						//}
-
-						/*else {
-							UE_LOG(LogTemp, Warning, TEXT("Checkpoint already used"));
-
-						}*/
 					}
 					else {
 
 						bool createdNewSave = myGameInstance->CreateNewSaveGame();
-
-						if (createdNewSave) {
-							UE_LOG(LogTemp, Warning, TEXT("NEW SLOT CREATED SUCCESS"));
-						}
-
-						else {
-							UE_LOG(LogTemp, Warning, TEXT("NEW SLOT CREATED FAILED"));
-						}
-
 					}
 
 					if (myGameInstance->SaveGame(OtherActor->GetActorLocation(), aliveEnemiesNames, activatedCheckpointNames, Cast<AMyPlayer>(GetWorld()->GetFirstPlayerController()->GetPawn())->myHUD->scoreManagerWidget->score)) {
-						//if (myGameInstance->SaveGame(OtherActor->GetActorLocation(), aliveEnemyAI, enemyActors, aliveEnemyActors, myGameInstance->mySaveGame->activatedCheckpoints, enemyAI, aliveEnemiesNames, activatedCheckpointNames)) {
-						UE_LOG(LogTemp, Warning, TEXT("SAVE SUCCESS"));
 						return;
 					}
 				}
 
 			}
-
-			else {
-				UE_LOG(LogTemp, Warning, TEXT("SAVE FAIL 1"));
-
-
-			}
-
-		}
-
-		else {
-			UE_LOG(LogTemp, Warning, TEXT("CHECKPOINT USED"));
-
 		}
 	}
-	else {
-		UE_LOG(LogTemp, Warning, TEXT("ENEMY CHASING"));
-
-	}
-
 }
 
 

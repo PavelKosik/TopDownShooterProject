@@ -14,7 +14,6 @@ void AMyAIController::BeginPlay() {
 	navMesh = UNavigationSystemV1::GetCurrent(this);
 
 	AMyAIController::FollowPath();
-	// AMyAIController::HandleHearing();
 	player = Cast<AMyPlayer>(GetWorld()->GetFirstPlayerController()->GetPawn());
 	player->aiController = this;
 	distanceToStartShootingAt = myEnemyLogic->distanceEnemyCanSee;
@@ -36,7 +35,6 @@ void AMyAIController::Tick(float DeltaTime) {
 				if (myEnemyLogic->foundPlayer == false && myEnemyLogic->playerFoundThisFrame == false) {
 
 					if (IsFollowingAPath() == false) {
-						//MoveToLocation(myEnemyLogic->waypointPositons[0]);
 						if (returningToStationaryPoint == false) {
 							AMyAIController::RotateStationaryEnemy();
 						}
@@ -65,7 +63,6 @@ void AMyAIController::Tick(float DeltaTime) {
 
 
 	if (myEnemyLogic->foundPlayer && myEnemyLogic->playerFoundThisFrame == false) {
-		UE_LOG(LogTemp, Warning, TEXT("WALK TO LAST SEEN POSTION IF CALLED"));
 		AMyAIController::WalkToLastSeenPosition();
 		lookingForPlayer = true;
 		shooting = false;
@@ -76,9 +73,7 @@ void AMyAIController::Tick(float DeltaTime) {
 		shooting = false;
 
 		if (sawBullet) {
-			UE_LOG(LogTemp, Warning, TEXT("SAW BULLET 1"));
 			if (goingToBulletLastSawPos == false) {
-				UE_LOG(LogTemp, Warning, TEXT("SAW BULLET 2"));
 				StopMovement();
 				dirToContinueWalking = lastBulletPos - myEnemyLogic->GetActorLocation();
 				dirToContinueWalking.Normalize();
@@ -94,8 +89,6 @@ void AMyAIController::Tick(float DeltaTime) {
 	if (lookingForPlayer) {
 		if (IsFollowingAPath() == false) {
 			StopMovement();
-			//goingToLastSawPosition = false;
-			UE_LOG(LogTemp, Warning, TEXT("ROTATION IF CALLED IN TICK"));
 			AMyAIController::RotateAroundSearch();
 		}
 
@@ -103,11 +96,8 @@ void AMyAIController::Tick(float DeltaTime) {
 	}
 
 	if (goingToBulletLastSawPos) {
-		UE_LOG(LogTemp, Warning, TEXT("GOING TO LAST BULLET POST PART OF CODE CALLED IN TICK"));
 		return;
 	}
-
-
 
 }
 
@@ -166,56 +156,11 @@ void AMyAIController::OnMoveCompleted(FAIRequestID RequestID, const FPathFollowi
 	}
 
 	if (goingToBulletLastSawPos) {
-		UE_LOG(LogTemp, Warning, TEXT("GOING TO LAST BULLET POST PART OF CODE CALLED"));
 		returningToStationaryPoint = true;
 		AMyAIController::FindPointNearLastSawBulletPos();
 	}
-
-
 }
 
-
-
-/*void AMyAIController::MoveToRandomPoint() {
-	//  myPawn = GetPawn();
-	 // UE_LOG(LogTemp, Warning, TEXT("%s"), myEnemyLogic->foundPlayer? "true" : "false");
-	if (myPawn) {
-		navMesh = UNavigationSystemV1::GetCurrent(this);
-
-		if (navMesh) {
-
-			FNavLocation outLocation;
-
-			float searchRadius = 350.0f;
-
-			FNavLocation randomPt;
-
-			const bool bFound = navMesh->GetRandomPointInNavigableRadius(myPawn->GetNavAgentLocation(), searchRadius, randomPt);
-
-			if (bFound)
-			{
-				MoveToLocation(randomPt);
-			}
-
-			else {
-				AMyAIController::MoveToRandomPoint();
-			}
-
-		}
-
-		else {
-			navMesh = UNavigationSystemV1::GetCurrent(this);
-			AMyAIController::MoveToRandomPoint();
-
-		}
-	}
-
-	else {
-		myPawn = GetPawn();
-		AMyAIController::MoveToRandomPoint();
-	}
-}
-*/
 void AMyAIController::MoveToPlayer() {
 
 	lookingForPlayer = true;
@@ -224,9 +169,7 @@ void AMyAIController::MoveToPlayer() {
 
 void AMyAIController::ShootPlayer() {
 
-	//AMyAIController::LookAtPlayer();
 	shooting = true;
-	//MAYBE WILL HELP lookingForPlayer = false;
 	if (currentTimeBetweenShots >= timeBetweenShotsMax) {
 		FActorSpawnParameters parameters;
 		parameters.Owner = this;
@@ -235,9 +178,8 @@ void AMyAIController::ShootPlayer() {
 
 		FCollisionQueryParams collisionParameters;
 
-		//get projectile spawn position so we can spawn the projectile there
+	
 		FVector spawnPos = myEnemyLogic->projectileSpawn->GetComponentLocation();
-		//FVector positionToGo = FVector(hit.Location.X - projectileSpawn->GetComponentLocation().X, hit.Location.Y - projectileSpawn->GetComponentLocation().Y, 0);
 		FVector positionToGo;
 
 		positionToGo = myEnemyLogic->projectileSpawn->GetForwardVector() * 10000;
@@ -280,16 +222,13 @@ void AMyAIController::ShootPlayer() {
 		FRotator setRotation = FRotator(0, lookRotation.Yaw, 0);
 
 		myPawn->SetActorRotation(setRotation);
-
 	}
-
 }
 
 void AMyAIController::LookAtPlayer() {
 
 	MoveToActor(myEnemyLogic->player);
 	StopMovement();
-
 }
 
 void AMyAIController::WalkToLastSeenPosition() {
@@ -297,15 +236,12 @@ void AMyAIController::WalkToLastSeenPosition() {
 	MoveToLocation(myEnemyLogic->lastPlayerSawPos);
 	myEnemyLogic->foundPlayer = false;
 	goingToLastSawPosition = true;
-	UE_LOG(LogTemp, Warning, TEXT("going to last saw position"));
-
 }
 
 void AMyAIController::HandleHearing() {
 
 	float distance = FVector::Dist(player->GetActorLocation(), myPawn->GetActorLocation());
 	bool setPosition = false;
-	//UE_LOG(LogTemp, Warning, TEXT("%f"), distance);
 
 
 	if (distance <= maxHearDistanceShoot && player->madeSoundShoot) {
@@ -318,63 +254,10 @@ void AMyAIController::HandleHearing() {
 		setPosition = true;
 	}
 
-	/*if (FVector::Dist(player->GetActorLocation(), playerHeardPosition)>400.0f) {
-		AMyAIController::HandleHearing();
-	}*/
-
-
-
-
-	/*  if (distance <= 200.0f) {
-		  playerHeardPosition = player->GetActorLocation();
-		  setPosition = true;
-	  }
-
-	  else if (distance <= 500.0f) {
-		  playerHeardPosition = player->GetActorLocation() + FVector(FMath::FRandRange(10.0f, 15.0f), FMath::RandRange(10.0f, 15.0f), 0);
-		  setPosition = true;
-
-	  }
-
-	  else if (distance <= 750.0f) {
-		  playerHeardPosition = player->GetActorLocation() + FVector(FMath::FRandRange(15.0f, 20.0f), FMath::RandRange(10.0f, 15.0f), 0);
-		  setPosition = true;
-
-	  }
-
-	  else if (distance <= 1250.0f) {
-		  playerHeardPosition = player->GetActorLocation() + FVector(FMath::FRandRange(18.0f, 22.0f),FMath::RandRange(10.0f,15.0f),0);
-		  setPosition = true;
-
-	  }
-
-	  else if (distance<=1500.0f) {
-		  playerHeardPosition = player->GetActorLocation() + FVector(FMath::FRandRange(20.0f, 25.0f), FMath::RandRange(15.0f, 20.0f), 0);
-		  setPosition = true;
-
-	  }
-
-	  else if (distance <= 2000.0f) {
-		  playerHeardPosition = player->GetActorLocation() + FVector(FMath::FRandRange(25.0f, 35.0f), FMath::RandRange(15.0f, 20.0f), 0);
-		  setPosition = true;
-
-	  }
-
-	  */
-
-
-	  /*FNavLocation loc;
-	  FVector extent = FVector(1, 1, 1); maybe try again*/
-	  /*FNavAgentProperties* AgentProperties;
-	  FSharedConstNavQueryFilter QueryFilter;*/
-	  //if (navMesh->ProjectPointToNavigation(playerHeardPosition,loc,extent)) { maybe try again
 	if (setPosition) {
 		MoveTo(playerHeardPosition);
 		lookingForPlayer = true;
 	}
-	//}
-
-
 }
 
 void AMyAIController::FollowPath() {
@@ -421,7 +304,6 @@ void AMyAIController::Wait() {
 }
 
 void AMyAIController::RotateAroundSearch() {
-	UE_LOG(LogTemp, Warning, TEXT("ROTATE AROUND AND SEARCH CALLED"));
 	lookingForPlayer = true;
 	if (startedRotation) {
 		if (myPawn->GetControlRotation().Quaternion() == rotateAroundRotation) {
@@ -429,7 +311,6 @@ void AMyAIController::RotateAroundSearch() {
 			startedRotation = false;
 			goingToLastSawPosition = false;
 			lookingForPlayer = false;
-			UE_LOG(LogTemp, Warning, TEXT("SAME ROT"));
 			AMyAIController::FollowPath();
 		}
 
@@ -461,16 +342,12 @@ void AMyAIController::FindPointNearLastSawBulletPos() {
 	FNavLocation randomPt;
 	float searchRadius = 100.0f;
 	FVector pos = (player->GetActorLocation() - myPawn->GetActorLocation() / 2);
-	const bool bFound = true;//navMesh->GetRandomPointInNavigableRadius(pos, searchRadius, randomPt);
-	//FVector randomPt1 = randomPt;
+	const bool bFound = true;/
 
 
 	if (bFound && IsFollowingAPath() == false) {
-		//MoveToLocation(randomPt1);
-		UE_LOG(LogTemp, Warning, TEXT("SAW BULLET 3"));
 		goingToBulletLastSawPos = false;
 		sawBullet = false;
-		//UNCOMENT IF TEST DOES NOT WORK	AMyAIController::RotateAroundSearch();
 	}
 
 
@@ -489,7 +366,5 @@ void AMyAIController::RotateStationaryEnemy() {
 	if (myPawn->GetControlRotation() != staticEnemyRotation) {
 		FQuat QuatRotation = FQuat(FRotator(0, stationaryRotationSpeed, 0));
 		myPawn->AddActorLocalRotation(QuatRotation, false, 0, ETeleportType::None);
-		UE_LOG(LogTemp, Warning, TEXT("CALLED ROTATION STATIONARY"));
-		//AMyAIController::RotateStationaryEnemy();
 	}
 }

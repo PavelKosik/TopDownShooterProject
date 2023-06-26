@@ -27,7 +27,6 @@ void AMyEnemyProjectile::BeginPlay()
 	projectileMovementComponent->SetUpdatedComponent(projectileBody);
 	projectileMovementComponent->InitialSpeed = projectileMoveSpeed;
 	projectileMovementComponent->MaxSpeed = projectileMoveSpeed;
-	//projectileMovementComponent->bRotationFollowsVelocity = true;
 	projectileMovementComponent->bShouldBounce = true;
 	projectileMovementComponent->Bounciness = 1.0f;
 	projectileMovementComponent->ProjectileGravityScale = 0.0f;
@@ -139,19 +138,8 @@ void AMyEnemyProjectile::StartKillPlayerTimer() {
 }
 
 void AMyEnemyProjectile::KillPlayer() {
-	UE_LOG(LogTemp, Warning, TEXT("TIMER ACTIVE CALLED"));
 	playerObject->Die();
 	Destroy();
-	/*if (GetWorldTimerManager().IsTimerActive(timerHandle) == false) {
-		UE_LOG(LogTemp, Warning, TEXT("TIMER ACTIVE FALSE"));
-		playerObject->Die();
-		Destroy();
-	}
-
-	else {
-		UE_LOG(LogTemp, Warning, TEXT("TIMER ACTIVE TRUE"));
-		AMyEnemyProjectile::KillPlayer();
-	}*/
 }
 
 

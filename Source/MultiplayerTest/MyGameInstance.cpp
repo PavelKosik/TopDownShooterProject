@@ -59,8 +59,6 @@ bool UMyGameInstance::SaveGame(FVector playerPos, TArray<class AMyAIController*>
 			mySaveGame->enemyAI = enemyAI;
 			mySaveGame->aliveEnemiesNames = aliveEnemiesNames;
 			mySaveGame->activatedCheckpointNames = activatedCheckpointNames;
-			UE_LOG(LogTemp, Warning, TEXT("MY GAME INSTANCE HODNOTY ZAPSANY"));
-
 		}
 
 	}
@@ -74,7 +72,6 @@ bool UMyGameInstance::SaveGame(FVector playerPos, TArray<class AMyAIController*>
 		mySaveGame->activatedCheckpointNames = activatedCheckpointNames;
 
 	}
-	UE_LOG(LogTemp, Warning, TEXT("GAME INSTANCE VYPIS- AliveEnemies:  %i, EnemyActors: %i, AliveEnemyActors: %i, EnemyAI: %i"), mySaveGame->aliveEnemies.Num(), mySaveGame->enemyActors.Num(), mySaveGame->aliveEnemyActors.Num(), mySaveGame->enemyAI.Num());
 
 	return UGameplayStatics::SaveGameToSlot(mySaveGame, UNIQUE_SAVE_SLOT, 0);
 

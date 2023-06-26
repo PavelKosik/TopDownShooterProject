@@ -55,7 +55,6 @@ void AMyHUD::Tick(float DeltaTime) {
 
 	if (myPlayer) {
 		if (myPlayer->hasWon && wonMenuDisplayed == false) {
-			UE_LOG(LogTemp, Warning, TEXT("Player won"));
 			playerWonMenu = CreateWidget<UMyPlayerWonMenu>(GetWorld(), myPlayerWonMenuWidgetTemplete);
 			playerWonMenu->myHUD = this;
 			playerWonMenu->AddToViewport();
