@@ -529,7 +529,7 @@ void AMyPlayer::SetupPlayerController() {
 	myPlayerController->bEnableClickEvents = true;
 	myPlayerController->bEnableMouseOverEvents = true;
 
-	// refenrence to UUserWidget created from cursorWidgetTemplete
+	// reference to UUserWidget created from cursorWidgetTemplete
 	// this UUserWidget is used as default game cursor
 	UUserWidget* cursorWidget = CreateWidget<UUserWidget>(GetGameInstance(), cursorWidgetTemplete);
 
@@ -538,8 +538,6 @@ void AMyPlayer::SetupPlayerController() {
 
 	// makes sure the mouse input works the same way when cursor is shown/not shown
 	UWidgetBlueprintLibrary::SetInputMode_GameAndUIEx(myPlayerController, cursorWidget, EMouseLockMode::LockAlways, false);
-
-
 }
 
 void AMyPlayer::HandleSoundTimers(float DeltaTime) {

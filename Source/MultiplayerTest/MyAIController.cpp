@@ -342,7 +342,7 @@ void AMyAIController::FindPointNearLastSawBulletPos() {
 	FNavLocation randomPt;
 	float searchRadius = 100.0f;
 	FVector pos = (player->GetActorLocation() - myPawn->GetActorLocation() / 2);
-	const bool bFound = true;/
+	const bool bFound = true;
 
 
 	if (bFound && IsFollowingAPath() == false) {
