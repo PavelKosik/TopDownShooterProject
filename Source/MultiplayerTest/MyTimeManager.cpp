@@ -11,6 +11,7 @@ UMyTimeManager::UMyTimeManager(const FObjectInitializer& ObjectInitializer) : Su
 }
 void UMyTimeManager::NativeConstruct() {
 	Super::NativeConstruct();
+	//tries to get the current save and load the time from it
 	myGameInstance = Cast<UMyGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
 	if (myGameInstance != nullptr) {
 		if (myGameInstance->mySaveGame != nullptr) {
@@ -26,7 +27,7 @@ void UMyTimeManager::NativeConstruct() {
 
 void UMyTimeManager::NativeTick(const FGeometry& MyGeometry, float InDeltaTime) {
 	Super::NativeTick(MyGeometry, InDeltaTime);
-
+	//the time player spent clearing the level should only increase until player finishes the level
 	if (gameWon == false) {
 
 		FString text = "Time: ";
@@ -52,7 +53,7 @@ void UMyTimeManager::NativeTick(const FGeometry& MyGeometry, float InDeltaTime) 
 
 
 	}
-
+	//saves the time
 	if (myGameInstance != nullptr) {
 		if (myGameInstance->mySaveGame != nullptr) {
 			if (gameWon == false) {
@@ -63,9 +64,9 @@ void UMyTimeManager::NativeTick(const FGeometry& MyGeometry, float InDeltaTime) 
 		}
 
 	}
+
 	else {
 		myGameInstance = Cast<UMyGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
 	}
-
 
 }

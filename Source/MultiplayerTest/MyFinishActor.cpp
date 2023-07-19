@@ -29,6 +29,8 @@ void AMyFinishActor::Tick(float DeltaTime)
 }
 
 void AMyFinishActor::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) {
+	//this object is the goal for player to reach
+	//when player model collides with this object he finished the level
 	if (OtherActor->ActorHasTag("Player")) {
 		AMyPlayer* player = Cast<AMyPlayer>(OtherActor);
 		player->hasWon = true;

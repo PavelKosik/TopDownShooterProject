@@ -9,21 +9,12 @@
 UMySaveGame::UMySaveGame()
 {
 	
-	/*if (UMySaveGame* SaveGameInstance = Cast<UMySaveGame>(UGameplayStatics::CreateSaveGameObject(UMySaveGame::StaticClass())))
-	{
-		AMyHUD* myHUD = Cast<AMyHUD>(UGameplayStatics::GetPlayerController(this, 0)->GetHUD());
-
-
-		SaveGameInstance->playerPos = myHUD->dashStaminaBar->aMyPlayer->GetActorLocation();
-
-
-	}*/
 }
 
 void UMySaveGame::SaveGame() {
 	
 }
-
+//Creates a save slot
 void UMySaveGame::CreateSlot(const FString& name) {
 	saveGameName = name;
 	creationTime = FDateTime::Now();
@@ -32,5 +23,4 @@ void UMySaveGame::CreateSlot(const FString& name) {
 	playerPos = myHUD->dashStaminaBar->aMyPlayer->GetActorLocation();
 
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AMyAIController::StaticClass(), enemyActors);
-	UE_LOG(LogTemp, Warning, TEXT("CREATE SLOT CALLED: %f, %f, %f"), playerPos.X, playerPos.Y, playerPos.Z);
 }

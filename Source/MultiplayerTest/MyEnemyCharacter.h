@@ -100,7 +100,7 @@ public:
 		UStaticMeshComponent* staticMeshPlacer;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Waypoints", META = (Name = "Spawn Waypoint", DisplayAfter = "StaticMeshPlacer"))
-		bool shouldSpawnwaypoint{ false };
+		bool shouldSpawnWaypoint{ false };
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Waypoints")
 		TArray<FVector> waypointPositons;

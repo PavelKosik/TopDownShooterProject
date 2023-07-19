@@ -16,8 +16,6 @@ AMyProjectile::AMyProjectile()
 
 	projectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("Projectile movement component"));
 
-	//material = CreateDefaultSubobject<UMaterialInstance>(TEXT("Material"));
-
 	RootComponent = projectileMesh;
 }
 
@@ -27,15 +25,13 @@ void AMyProjectile::BeginPlay()
 	Super::BeginPlay();	
 
 	projectileMesh->OnComponentHit.AddDynamic(this, &AMyProjectile::OnCollision);
-
+	//sets up the basic projectile properties
 	projectileMovementComponent->SetUpdatedComponent(projectileMesh);
 	projectileMovementComponent->InitialSpeed = projectileMoveSpeed;
 	projectileMovementComponent->MaxSpeed = projectileMoveSpeed;
-	//projectileMovementComponent->bRotationFollowsVelocity = true;
 	projectileMovementComponent->bShouldBounce = true;
 	projectileMovementComponent->Bounciness = 1.0f;
 	projectileMovementComponent->ProjectileGravityScale = 0.0f;
-	//UE_LOG(LogTemp, Warning, TEXT("%f,%f,%f"), projectileMovementComponent->Velocity.X, projectileMovementComponent->Velocity.Y, projectileMovementComponent->Velocity.Z);
 }
 
 // Called every frame
@@ -45,6 +41,7 @@ void AMyProjectile::Tick(float DeltaTime)
 
 	distanceTravelled += projectileMoveSpeed;
 
+	//if projectile gets stuck traveling somewhere for too long it gets destroyed so that player can fire again
 	if (distanceTravelled>= allowedDistanceTravelled) {
 		playerObject->currentProjectile = NULL;
 		Destroy();
@@ -54,15 +51,13 @@ void AMyProjectile::Tick(float DeltaTime)
 	if (bounced==false) 
 	{	
 		projectileMovementComponent->Velocity = positionToGoTo * projectileMovementComponent->InitialSpeed;
-		//UE_LOG(LogTemp, Warning, TEXT("%f,%f,%f"), projectileMovementComponent->Velocity.X, projectileMovementComponent->Velocity.Y, projectileMovementComponent->Velocity.Z);
-
 	}
 
 
 	else 
 	{		
+		//changes the projectiles material to reflect that it bounced
 		if (materialChanged==false) {
-			//UMaterial* mat = materialBounced->GetMaterial();
 			projectileMesh->SetMaterial(0, materialBounced);
 			materialChanged = true;
 		}
@@ -77,8 +72,6 @@ void AMyProjectile::Tick(float DeltaTime)
 		playerObject->currentProjectile = NULL;
 		Destroy();
 	}
-
-	//UE_LOG(LogTemp, Warning, TEXT("%f"), FVector::Distance(playerObject->playerMesh->GetComponentLocation(), projectileMesh->GetComponentLocation()));
 
 	//if projectile is too far away, destroy it
 	if (FVector::Distance(playerObject->playerSkeletalMesh->GetComponentLocation(), projectileMesh->GetComponentLocation())> allowerdDistanceBetweenPlayerAndProjectile) {
@@ -103,9 +96,6 @@ void AMyProjectile::OnCollision(UPrimitiveComponent* HitComponent, AActor* Other
 			AActor* aiActor = OtherActor;
 			AMyEnemyCharacter* ai = Cast<AMyEnemyCharacter>(aiActor);
 			ai->myCont->killed = true;
-			/*OtherActor->SetActorHiddenInGame(true);
-			OtherActor->SetActorEnableCollision(false);*/
-			//OtherActor->SetActorTickEnabled(false);
 			OtherActor->Destroy();
 			playerObject->currentProjectile = NULL;
 			Destroy();
@@ -116,10 +106,6 @@ void AMyProjectile::OnCollision(UPrimitiveComponent* HitComponent, AActor* Other
 			playerObject->currentProjectile = NULL;
 			Destroy();
 		}
-	}
-
-	if (OtherActor->ActorHasTag("Ground")) {
-		UE_LOG(LogTemp, Warning, TEXT("Hit the ground running"));
 	}
 }
 

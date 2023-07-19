@@ -14,19 +14,23 @@ void AMultiplayerTestGameModeBase::BeginPlay() {
 
 	gameInstance = Cast<UMyGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
 
-	if (gameInstance!= nullptr) {
+	if (gameInstance != nullptr) {
 		bool isNewGame = gameInstance->IsNewGame();
 	}
 }
 
 void AMultiplayerTestGameModeBase::OnNewGame(FName mapToLoad) {
-	if (gameInstance == nullptr) return;
-
+	if (gameInstance == nullptr)
+	{
+		return;
+	}
+	//opens the game level
 	if (gameInstance->CreateNewSaveGame()) {
 		UGameplayStatics::OpenLevel(GetWorld(), mapToLoad, true);
 	}
 }
 
 void AMultiplayerTestGameModeBase::OnLoadGame(FName maptoLoad) {
+	//loads the game level
 	UGameplayStatics::OpenLevel(GetWorld(), maptoLoad, true);
 }

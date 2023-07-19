@@ -8,7 +8,7 @@ UMyDashStaminaBar::UMyDashStaminaBar(const FObjectInitializer& ObjectInitializer
 }
 
 void UMyDashStaminaBar::NativeTick(const FGeometry& MyGeometry, float InDeltaTime) {
-		
+	//scales the widget to reflect the time player needs to wait before he can dash again
 	if (VerticalBox_147) {
 		UCanvasPanelSlot* slot = Cast<UCanvasPanelSlot>(VerticalBox_147->Slot);
 		if (aMyPlayer) {

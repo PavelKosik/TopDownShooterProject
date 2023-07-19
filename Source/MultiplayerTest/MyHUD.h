@@ -54,7 +54,7 @@ public:
 	bool wonMenuDisplayed{ false };
 	bool shouldDisplaySaveWidget{ false };
 
-	FTimerHandle timerHandle;
+	FTimerHandle gameSavedDisplayTimerHandle;
 
 	void HideGameSavedWidget();
 };

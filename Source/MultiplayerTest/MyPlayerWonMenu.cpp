@@ -12,6 +12,7 @@ UMyPlayerWonMenu::UMyPlayerWonMenu(const FObjectInitializer& ObjectInitializer) 
 
 void UMyPlayerWonMenu::NativeConstruct() {
 	Super::NativeConstruct();
+	//ads on click events to all the buttons for them to function
 	NextButton->OnClicked.AddDynamic(this, &UMyPlayerWonMenu::NextButtonOnClick);
 	RetryButton->OnClicked.AddDynamic(this, &UMyPlayerWonMenu::RetryButtonOnClick);
 	ExitButton->OnClicked.AddDynamic(this, &UMyPlayerWonMenu::ExitButtonOnClick);
@@ -19,6 +20,7 @@ void UMyPlayerWonMenu::NativeConstruct() {
 }
 
 void UMyPlayerWonMenu::NativeTick(const FGeometry& MyGeometry, float InDeltaTime) {
+	//display player's time and score after the level is finished
 	FString scoreText = "Your Score: ";
 	FString timeText = "Your Time: ";
 	if (myHUD) {
@@ -39,14 +41,12 @@ void UMyPlayerWonMenu::NativeTick(const FGeometry& MyGeometry, float InDeltaTime
 			myHUD->timeManagerWidget->gameWon = true;
 			myPlayer->SetPause(true);
 		}
-
-		else {
-			UE_LOG(LogTemp, Warning, TEXT("PlAYER NOT FOUND"));
-		}
 	}
 }
 
 void UMyPlayerWonMenu::NextButtonOnClick() {
+	//loads the next level, if such level exists
+	//all levels are stored in levelNames TArray which can be edited in BP
 	FName currentLevel = GetWorld()->GetFName();
 	FName nextLevel="";
 	for (int i = 0; i < levelNames.Num(); i++) {
@@ -54,29 +54,20 @@ void UMyPlayerWonMenu::NextButtonOnClick() {
 			if (levelNames.IsValidIndex(i+1)) {
 				nextLevel = levelNames[i + 1];
 			}
-
-			else {
-				UE_LOG(LogTemp, Warning, TEXT("NOT A VALID NEXT LEVEL1"));
-			}
 		}
 	}
 
 	if (nextLevel!="") {
 		UGameplayStatics::OpenLevel(this, nextLevel, false);
 	}
-
-	else {
-		UE_LOG(LogTemp, Warning, TEXT("NOT A VALID NEXT LEVEL2"));
-	}
-
 }
 
 void UMyPlayerWonMenu::RetryButtonOnClick() {
-	UE_LOG(LogTemp, Warning, TEXT("%s"), *(GetWorld()->GetFName()).ToString());
-
+	//reloads the level
 	UGameplayStatics::OpenLevel(this, FName(GetWorld()->GetFName()), false);
 }
 
 void UMyPlayerWonMenu::ExitButtonOnClick() {
+	//exits the game
 	UKismetSystemLibrary::QuitGame(GetWorld(), UGameplayStatics::GetPlayerController(GetWorld(), 0), EQuitPreference::Quit, true);
 }

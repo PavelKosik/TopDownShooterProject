@@ -15,6 +15,7 @@ AMyPlayerLevelSelect::AMyPlayerLevelSelect()
 
 	cameraAttach = CreateDefaultSubobject<USpringArmComponent>(TEXT("Spring Arm"));
 
+	//setups the camera to follow the player
 	cameraAttach->SetupAttachment(playerMesh);
 	cameraComponent->AttachToComponent(cameraAttach, FAttachmentTransformRules::KeepRelativeTransform);
 	cameraAttach->bUsePawnControlRotation = true;
@@ -47,12 +48,13 @@ void AMyPlayerLevelSelect::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 
 }
 
-
+//moves the player horizontally
 void AMyPlayerLevelSelect::MoveHorizontal(float horizontal)
 {
 	playerMesh->SetAllPhysicsLinearVelocity(FVector(playerMoveSpeed * -horizontal, playerMesh->GetPhysicsLinearVelocity().Y, 0), false);
 }
 
+//moves the player vertically
 void AMyPlayerLevelSelect::MoveVertical(float vertical)
 {
 	playerMesh->SetAllPhysicsLinearVelocity(FVector(playerMesh->GetPhysicsLinearVelocity().X, playerMoveSpeed * vertical, 0), false);

@@ -61,6 +61,7 @@ void AMyPlayer::BeginPlay()
 
 	myHUD = Cast<AMyHUD>(UGameplayStatics::GetPlayerController(this, 0)->GetHUD());
 
+	//makes sure the dashStaminaBar has a reference to player to use for it's scale
 	if (myHUD) {
 
 		myHUD->dashStaminaBar->aMyPlayer = this;
@@ -68,6 +69,8 @@ void AMyPlayer::BeginPlay()
 
 	UMyGameInstance* gameInstance = Cast< UMyGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
 
+	//the player position gets saved on checkpoints
+	//if there is such a save, then player position is set to the position of last checkpoint
 	if (gameInstance->mySaveGame != nullptr) {
 		SetActorLocation(gameInstance->mySaveGame->playerPos);
 	}
@@ -78,6 +81,7 @@ void AMyPlayer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	//makes sure that player is always set to Walking in case he would collide with things that can make him rotate
 	if (GetCharacterMovement()->MovementMode == EMovementMode::MOVE_Falling) {
 		GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
 	}
@@ -86,6 +90,8 @@ void AMyPlayer::Tick(float DeltaTime)
 		playerSkeletalMesh = GetMesh();
 	}
 
+	//if enemies managed to kill the player
+	//then the player is disabled and the screen with him being dead is shown
 	if (hasBeenHit) {
 		SetActorTickEnabled(false);
 		APlayerController* myPlayer = UGameplayStatics::GetPlayerController(GetWorld(), 0);
@@ -148,13 +154,12 @@ void AMyPlayer::Tick(float DeltaTime)
 	}
 
 	AMyPlayer::KeepPlayerInAir();
-	AMyPlayer::UpdateCursorMesh();
 
 	AMyPlayer::HandleSoundTimers(DeltaTime);
 
 	int x, y;
 	myPlayerController->GetViewportSize(x, y);
-
+	//makes sure that all the screen related stuff works when player changes screen size
 	if (x != viewportSize.X || y != viewportSize.Y) {
 		viewportSize = FVector2D(GEngine->GameViewport->Viewport->GetSizeXY());
 	}
@@ -162,10 +167,12 @@ void AMyPlayer::Tick(float DeltaTime)
 	if (shouldFreeView) {
 		float mouseX, mouseY;
 		myPlayerController->GetMousePosition(mouseX, mouseY);
+		//player should be able to move the camera only when he reaches the edges of the screen
+		//to prevent him from moving the camera accidentaly
 		if (mouseX / viewportSize.X > 0.8f || mouseX / viewportSize.X < 0.2f || mouseY / viewportSize.Y > 0.8f || mouseY / viewportSize.Y < 0.2f) {
 			cameraFollowPosition.Y -= cameraSpeed * (mouseY / viewportSize.Y - 0.5f);
 		}
-
+		//camera can only reach so far from the player to prevent player from seeing all the level from start
 		if (FVector::Dist(playerSkeletalMesh->GetComponentLocation(), cameraFollowPosition) > maxCameraDistance) {
 			cameraFollowPosition = lastCameraCorrectPos;
 		}
@@ -177,6 +184,7 @@ void AMyPlayer::Tick(float DeltaTime)
 		cameraAttach->SetWorldLocation(cameraFollowPosition);
 	}
 
+	//camera is locked to the top of the player when he doesn't move it
 	else {
 		cameraFollowPosition = GetActorLocation();
 		cameraAttach->SetWorldLocation(GetActorLocation());
@@ -187,11 +195,12 @@ void AMyPlayer::Tick(float DeltaTime)
 		currentDashTime -= DeltaTime;
 	}
 
+	//prevents player from being able to spam the dash
 	if (currentDelayBetweenDashes > 0.0f) {
 		currentDelayBetweenDashes -= DeltaTime;
 	}
 
-
+	//spawns the parry shield which player uses to parry the enemy attacks
 	if (currentParryTime > 0.0f) {
 		parryShield->SetWorldLocation(projectileSpawn->GetComponentLocation() - FVector(0, 0, 0));
 		parryShield->SetWorldRotation(FRotator(playerSkeletalMesh->GetComponentRotation().Pitch, playerSkeletalMesh->GetComponentRotation().Yaw, 0));
@@ -199,14 +208,14 @@ void AMyPlayer::Tick(float DeltaTime)
 		currentParryTime -= DeltaTime;
 	}
 
+	//despawns the parry shield
 	else {
-
 		parryShield->SetWorldLocation(projectileSpawn->GetComponentLocation() - FVector(0, 0, 0));
 		parryShield->SetWorldRotation(FRotator(playerSkeletalMesh->GetComponentRotation().Pitch, playerSkeletalMesh->GetComponentRotation().Yaw, 0));
-
 		parryShield->SetVisibility(false);
 	}
 
+	//prevents player from being able to spam the parry
 	if (currentDelayBetweenParry > 0.0f) {
 		currentDelayBetweenParry -= DeltaTime;
 	}
@@ -235,14 +244,18 @@ void AMyPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 void AMyPlayer::MoveHorizontal(float horizontal)
 {
+	//player can only move when he isn't in a dash state
 	if (currentDashTime <= 0.0f) {
 		if (horizontal > 0) {
+			//used for handling sound and enemy hearing sounds
 			madeSoundTimerStep = 0.25f;
 
+			//this stops player if he walked in different direction before this
 			if (currentPlayerMovementSpeedX > 0) {
 				currentPlayerMovementSpeedX = 0;
 			}
 
+			//player builds momentum until a certain threshold
 			if (currentPlayerMovementSpeedX - increasePlayerMoveSpeed >= -maxPlayerMoveSpeed) {
 				currentPlayerMovementSpeedX -= increasePlayerMoveSpeed;
 			}
@@ -253,13 +266,14 @@ void AMyPlayer::MoveHorizontal(float horizontal)
 		}
 
 		if (horizontal < 0) {
+			//used for handling sound and enemy hearing sounds
 			madeSoundTimerStep = 0.25f;
-
+			//this stops player if he walked in different direction before this
 			if (currentPlayerMovementSpeedX < 0) {
 				currentPlayerMovementSpeedX = 0;
 			}
 
-
+			//player builds momentum until a certain threshold
 			if (currentPlayerMovementSpeedX + increasePlayerMoveSpeed <= maxPlayerMoveSpeed) {
 				currentPlayerMovementSpeedX += increasePlayerMoveSpeed;
 			}
@@ -270,7 +284,7 @@ void AMyPlayer::MoveHorizontal(float horizontal)
 		}
 
 		if (horizontal == 0) {
-
+			//when player stop holding movement keys he doesn't stop right away but loses momentum over time
 			if (currentPlayerMovementSpeedX > 0) {
 
 				if (currentPlayerMovementSpeedX - decreasePlayerMoveSpeed > 0) {
@@ -281,7 +295,7 @@ void AMyPlayer::MoveHorizontal(float horizontal)
 					currentPlayerMovementSpeedX = 0;
 				}
 			}
-
+			//when player stop holding movement keys he doesn't stop right away but loses momentum over time
 			if (currentPlayerMovementSpeedX < 0) {
 
 				if (currentPlayerMovementSpeedX + decreasePlayerMoveSpeed < 0) {
@@ -293,7 +307,7 @@ void AMyPlayer::MoveHorizontal(float horizontal)
 				}
 			}
 		}
-
+		//moves player based on the current momentum
 		if (playerSkeletalMesh) {
 			AddMovementInput(FVector(currentPlayerMovementSpeedX, 0, 0), 1);
 		}
@@ -303,14 +317,18 @@ void AMyPlayer::MoveHorizontal(float horizontal)
 
 void AMyPlayer::MoveVertical(float vertical)
 {
+	//player can only move when he isn't in a dash state
 	if (currentDashTime <= 0.0f) {
 		if (vertical > 0) {
+
+			//used for handling sound and enemy hearing sounds
 			madeSoundTimerStep = 0.25f;
 
+			//this stops player if he walked in different direction before this
 			if (currentPlayerMovementSpeedY < 0) {
 				currentPlayerMovementSpeedY = 0;
 			}
-
+			//player builds momentum until a certain threshold
 			if (currentPlayerMovementSpeedY + increasePlayerMoveSpeed <= maxPlayerMoveSpeed) {
 				currentPlayerMovementSpeedY += increasePlayerMoveSpeed;
 			}
@@ -321,12 +339,14 @@ void AMyPlayer::MoveVertical(float vertical)
 		}
 
 		if (vertical < 0) {
+			//used for handling sound and enemy hearing sounds
 			madeSoundTimerStep = 0.25f;
 
+			//this stops player if he walked in different direction before this
 			if (currentPlayerMovementSpeedY > 0) {
 				currentPlayerMovementSpeedY = 0;
 			}
-
+			//player builds momentum until a certain threshold
 			if (currentPlayerMovementSpeedY - increasePlayerMoveSpeed >= -maxPlayerMoveSpeed) {
 				currentPlayerMovementSpeedY -= increasePlayerMoveSpeed;
 			}
@@ -337,7 +357,7 @@ void AMyPlayer::MoveVertical(float vertical)
 		}
 
 		if (vertical == 0) {
-
+			//when player stop holding movement keys he doesn't stop right away but loses momentum over time
 			if (currentPlayerMovementSpeedY > 0) {
 
 				if (currentPlayerMovementSpeedY - decreasePlayerMoveSpeed > 0) {
@@ -348,7 +368,7 @@ void AMyPlayer::MoveVertical(float vertical)
 					currentPlayerMovementSpeedY = 0;
 				}
 			}
-
+			//when player stop holding movement keys he doesn't stop right away but loses momentum over time
 			if (currentPlayerMovementSpeedY < 0) {
 
 				if (currentPlayerMovementSpeedY + decreasePlayerMoveSpeed < 0) {
@@ -360,7 +380,7 @@ void AMyPlayer::MoveVertical(float vertical)
 				}
 			}
 		}
-
+		//moves player based on the current momentum
 		if (playerSkeletalMesh) {
 			AddMovementInput(FVector(0, currentPlayerMovementSpeedY, 0), 1);
 		}
@@ -400,7 +420,7 @@ void AMyPlayer::LeftClickFunction()
 
 				positionToGo = (cursorStaticMesh->GetRightVector()) * 1000;
 				positionToGo = FVector(positionToGo.X, positionToGo.Y, projectileSpawn->GetComponentLocation().Z);
-		
+
 
 				AMyProjectile* spawned = GetWorld()->SpawnActor<AMyProjectile>(projectileSpawnObject, spawnPos, rotator, parameters);
 
@@ -452,18 +472,14 @@ void AMyPlayer::LeftClickFunction()
 void AMyPlayer::RotatePlayerToMousePosition() {
 
 	FVector mousePosition;
-	FVector mouseDirection;
 
-	FVector mousePositionDeprojected;
-	FVector mouseDirectionDeprojected;
-	
 	FHitResult hit;
 
+	//gets mouse position based on what's under cursor because the GetMousePosition functions didn't work as intended because of camera movement
 	if (myPlayerController->GetHitResultUnderCursor(ECC_Visibility, true, hit)) {
 		mousePosition = hit.Location;
 	}
 
-	
 	if (playerSkeletalMesh) {
 		FVector direction = mousePosition - (cameraAttach->GetComponentLocation() - playerSkeletalMesh->GetComponentLocation());
 
@@ -479,6 +495,8 @@ void AMyPlayer::RotatePlayerToMousePosition() {
 
 
 void AMyPlayer::KeepPlayerInAir() {
+	//makes sure the player doesn't change his Z position when he collides with stuff
+	//because that would break the shooting and moving because of other collisions
 	if (playerSkeletalMesh) {
 
 		FVector oldPosition = playerSkeletalMesh->GetRelativeLocation();
@@ -489,28 +507,17 @@ void AMyPlayer::KeepPlayerInAir() {
 	}
 }
 
-
-
-void AMyPlayer::UpdateCursorMesh() {
-	float distance = FVector::Dist(FVector(playerSkeletalMesh->GetComponentLocation().X, playerSkeletalMesh->GetComponentLocation().Y, 0), FVector(cameraComponent->GetComponentLocation().X, cameraComponent->GetComponentLocation().Y, 0));
-
-	if (distance / 100 * cursorLength > 0.5f) {
-		cursorStaticMesh->SetRelativeScale3D(FVector(1, distance / 100 * cursorLength, 1));
-	}
-
-	else {
-		cursorStaticMesh->SetRelativeScale3D(FVector(1, 0.5f, 1));
-	}
-}
-
+//after player dies this reloads the level
 void AMyPlayer::Die() {
 	UGameplayStatics::OpenLevel(this, FName(GetWorld()->GetFName()), false);
 }
 
+//allows the player to use the camera to look around
 void AMyPlayer::SetCameraFreeViewTrue() {
 	shouldFreeView = true;
 }
 
+//after player stops looking around the camera snaps back to be on top of the player
 void AMyPlayer::SetCameraFreeViewFalse() {
 	shouldFreeView = false;
 	cameraFollowPosition = GetActorLocation();
@@ -570,11 +577,13 @@ void AMyPlayer::HandleSoundTimers(float DeltaTime) {
 
 void AMyPlayer::PlayerDash() {
 
+	//this delay makes sure that player can't spam the dash
 	if (currentDelayBetweenDashes <= 0) {
-
+		//sets the timers so make sure that the delays prevent player from using dash all the time
 		currentDashTime = maxDashTime;
 		currentDelayBetweenDashes = maxDelayBetweenDashes;
 
+		//if player is currently moving in some direction he dashes in that direction
 		if (moveDirectionX != 0 || moveDirectionY != 0) {
 
 			dashDirection = FVector(moveDirectionX, moveDirectionY, 0);
@@ -582,6 +591,7 @@ void AMyPlayer::PlayerDash() {
 
 		}
 
+		//when player isn't moving he dashes in the direction he is currently facing
 		if (moveDirectionX == 0 && moveDirectionY == 0) {
 
 			dashDirection = (cursorStaticMesh->GetRightVector()) * 1000;
@@ -592,7 +602,7 @@ void AMyPlayer::PlayerDash() {
 }
 
 void AMyPlayer::PlayerParry() {
-
+	//disallows player from spamming the parry
 	if (currentDelayBetweenParry <= 0) {
 
 		currentDelayBetweenParry = maxDelayBetweenParry;
